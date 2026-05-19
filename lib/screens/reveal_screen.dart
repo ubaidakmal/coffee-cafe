@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,14 +26,15 @@ class RevealScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: _cream,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(74),
+        preferredSize: const Size.fromHeight(94),
         child: _RevealAppBar(initialDelay: initialDelay),
       ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 760;
+            final isWide =
+                constraints.maxWidth >= 760 && constraints.maxHeight >= 620;
             final horizontalPadding = (constraints.maxWidth * 0.08).clamp(
               24.0,
               86.0,
@@ -102,89 +105,112 @@ class _RevealAppBar extends StatelessWidget {
 
     return SafeArea(
       bottom: false,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: isWide ? 54 : 22),
-        child: SizedBox(
-          height: 74,
-          child: Row(
-            children: [
-              Text(
-                    'KOFFIQA',
-                    style: GoogleFonts.poppins(
-                      color: RevealScreen._espresso,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2,
-                    ),
-                  )
-                  .animate(delay: (initialDelay + 120).ms)
-                  .fadeIn(duration: 500.ms)
-                  .slideY(begin: -0.35, end: 0, duration: 640.ms),
-              if (isWide) ...[
-                const Spacer(),
-                _NavText('Menu', delay: initialDelay + 220),
-                _NavText('Roastery', delay: initialDelay + 310),
-                _NavText('Ajdan Walk', delay: initialDelay + 400),
-                const SizedBox(width: 24),
-              ] else
-                const Spacer(),
-              Material(
-                    color: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(
-                        color: RevealScreen._deepBrown.withValues(alpha: 0.22),
+      child: SizedBox(
+        height: 94,
+        child: Center(
+          child:
+              ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.34),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.5),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: RevealScreen._deepBrown.withValues(
+                                alpha: 0.12,
+                              ),
+                              blurRadius: 28,
+                              offset: const Offset(0, 14),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isWide ? 24 : 18,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'KOFFIQA',
+                                style: GoogleFonts.poppins(
+                                  color: RevealScreen._espresso,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.8,
+                                ),
+                              ),
+                              if (isWide) ...[
+                                const SizedBox(width: 26),
+                                const _GlassNavText('Menu'),
+                                const _GlassDivider(),
+                                const _GlassNavText('Roastery'),
+                                const _GlassDivider(),
+                                const _GlassNavText('Ajdan Walk'),
+                              ] else ...[
+                                const SizedBox(width: 18),
+                                Icon(
+                                  Icons.menu_rounded,
+                                  color: RevealScreen._deepBrown,
+                                  size: 20,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: () {},
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        child: Icon(
-                          isWide ? Icons.arrow_forward : Icons.menu,
-                          color: RevealScreen._deepBrown,
-                          size: 18,
-                        ),
-                      ),
-                    ),
                   )
-                  .animate(delay: (initialDelay + 500).ms)
-                  .fadeIn(duration: 500.ms)
-                  .slideY(begin: -0.28, end: 0, duration: 600.ms),
-            ],
-          ),
+                  .animate(delay: (initialDelay + 220).ms)
+                  .fadeIn(duration: 520.ms)
+                  .slideY(begin: -0.45, end: 0, duration: 760.ms)
+                  .scale(
+                    begin: const Offset(0.96, 0.96),
+                    end: const Offset(1, 1),
+                    duration: 760.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
         ),
       ),
     );
   }
 }
 
-class _NavText extends StatelessWidget {
-  const _NavText(this.label, {required this.delay});
+class _GlassNavText extends StatelessWidget {
+  const _GlassNavText(this.label);
 
   final String label;
-  final int delay;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 13),
-      child:
-          Text(
-                label,
-                style: GoogleFonts.poppins(
-                  color: RevealScreen._mutedBrown,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              )
-              .animate(delay: delay.ms)
-              .fadeIn(duration: 420.ms)
-              .slideY(begin: -0.25, end: 0, duration: 560.ms),
+    return Text(
+      label,
+      style: GoogleFonts.poppins(
+        color: RevealScreen._mutedBrown,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+}
+
+class _GlassDivider extends StatelessWidget {
+  const _GlassDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 18,
+      margin: const EdgeInsets.symmetric(horizontal: 15),
+      color: RevealScreen._mutedBrown.withValues(alpha: 0.18),
     );
   }
 }
@@ -375,10 +401,10 @@ class _CupStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final stageHeight = isWide ? 620.0 : (width * 0.94).clamp(330.0, 470.0);
-    final mainCup = isWide ? 310.0 : (width * 0.46).clamp(170.0, 230.0);
-    final supportingCup = isWide ? 230.0 : (width * 0.34).clamp(120.0, 170.0);
-    final smallCup = isWide ? 205.0 : (width * 0.3).clamp(105.0, 150.0);
+    final stageHeight = isWide ? 1000.0 : (width * 1.1).clamp(430.0, 610.0);
+    final mainCup = isWide ? 750.0 : (width * 0.74).clamp(270.0, 390.0);
+    final supportingCup = isWide ? 600.0 : (width * 0.55).clamp(205.0, 295.0);
+    final smallCup = isWide ? 600.0 : (width * 0.5).clamp(185.0, 270.0);
 
     return SizedBox(
       height: stageHeight,
@@ -387,36 +413,36 @@ class _CupStage extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Positioned(
-            left: isWide ? 34 : -22,
-            top: isWide ? 118 : 54,
-            child: _SoftCircle(size: isWide ? 430 : 280),
+            left: isWide ? -18 : -58,
+            top: isWide ? 106 : 74,
+            child: _SoftCircle(size: isWide ? 560 : 390),
           ),
           Positioned(
-            right: isWide ? 20 : -18,
-            bottom: isWide ? 42 : 24,
-            child: _SoftCircle(size: isWide ? 250 : 160, opacity: 0.18),
+            right: isWide ? -42 : -54,
+            bottom: isWide ? 34 : 34,
+            child: _SoftCircle(size: isWide ? 360 : 230, opacity: 0.18),
           ),
           FlyingCup(
             imagePath: RevealScreen._creamCup,
             size: supportingCup,
-            top: isWide ? 92 : 28,
-            right: isWide ? 150 : 116,
-            rotation: -0.12,
+            top: isWide ? 10 : 18,
+            right: isWide ? 310 : 148,
+            rotation: 0,
             delay: initialDelay + 220,
           ),
           FlyingCup(
             imagePath: RevealScreen._darkCup,
             size: mainCup,
-            top: isWide ? 172 : 96,
-            right: isWide ? 24 : 24,
-            rotation: 0.08,
+            top: isWide ? 148 : 116,
+            right: isWide ? -140 : -30,
+            rotation: 0.3,
             delay: initialDelay + 620,
           ),
           FlyingCup(
             imagePath: RevealScreen._redCup,
             size: smallCup,
-            bottom: isWide ? 92 : 38,
-            right: isWide ? 242 : 170,
+            bottom: isWide ? 10 : 34,
+            right: isWide ? 700 : 210,
             rotation: -0.19,
             delay: initialDelay + 1020,
           ),
