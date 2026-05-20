@@ -50,7 +50,7 @@ class KoffiqaPitchApp extends StatelessWidget {
     );
 
     return MaterialApp(
-      title: 'Koffiqa',
+      title: 'Koffiqa by STACX',
       debugShowCheckedModeBanner: false,
       theme: baseTheme,
       home: const HeroScreen(),

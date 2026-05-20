@@ -166,7 +166,7 @@ class _ContactInfoPanel extends StatelessWidget {
         _ContactTile(
           icon: Icons.alternate_email_rounded,
           title: 'Email',
-          value: 'hello@koffiqa.sa',
+          value: 'hello@koffiqabystacx.sa',
         ),
       ],
     );

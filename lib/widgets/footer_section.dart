@@ -90,7 +90,7 @@ class FooterSection extends StatelessWidget {
             Container(height: 1, color: _cream.withValues(alpha: 0.12)),
             const SizedBox(height: 18),
             Text(
-              '© 2026 KOFFIQA. Crafted for a premium Saudi coffee experience.',
+              '© 2026 KOFFIQA BY STACX MARKETING. Crafted for a premium Saudi coffee experience.',
               textAlign: isWide ? TextAlign.left : TextAlign.center,
               style: GoogleFonts.poppins(
                 color: _cream.withValues(alpha: 0.62),
@@ -126,7 +126,7 @@ class _FooterBrand extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Text(
-              'KOFFIQA',
+              'KOFFIQA BY STACX MARKETING',
               style: GoogleFonts.poppins(
                 color: FooterSection._cream,
                 fontSize: 18,

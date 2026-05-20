@@ -149,7 +149,7 @@ class _HeroIntroContent extends StatelessWidget {
                 left: 24,
                 right: 24,
                 child: Text(
-                  'KOFFIQA',
+                  'KOFFIQA BY STACX',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     color: _cream,
