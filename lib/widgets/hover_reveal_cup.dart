@@ -153,24 +153,24 @@ class _HoverRevealCupState extends State<HoverRevealCup>
                                   ),
                                   child: DecoratedBox(
                                     decoration: BoxDecoration(
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFFC9922A)
-                                              .withValues(
-                                                alpha: 0.08 * revealOpacity,
-                                              ),
-                                          blurRadius: widget.size * 0.08,
-                                          spreadRadius: widget.size * 0.002,
-                                        ),
-                                        BoxShadow(
-                                          color: const Color(0xFF2A1005)
-                                              .withValues(
-                                                alpha: 0.09 * revealOpacity,
-                                              ),
-                                          blurRadius: widget.size * 0.06,
-                                          offset: Offset(0, widget.size * 0.03),
-                                        ),
-                                      ],
+                                      // boxShadow: [
+                                      //   BoxShadow(
+                                      //     color: const Color(0xFFC9922A)
+                                      //         .withValues(
+                                      //           alpha: 0.08 * revealOpacity,
+                                      //         ),
+                                      //     blurRadius: widget.size * 0.08,
+                                      //     spreadRadius: widget.size * 0.002,
+                                      //   ),
+                                      //   BoxShadow(
+                                      //     color: const Color(0xFF2A1005)
+                                      //         .withValues(
+                                      //           alpha: 0.09 * revealOpacity,
+                                      //         ),
+                                      //     blurRadius: widget.size * 0.06,
+                                      //     offset: Offset(0, widget.size * 0.03),
+                                      //   ),
+                                      // ],
                                     ),
                                     child: Image.asset(
                                       widget.revealSrc,

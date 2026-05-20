@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../widgets/about_section.dart';
 import '../widgets/flying_cup.dart';
+import '../widgets/scroll_moving_cup.dart';
 
-class RevealScreen extends StatelessWidget {
+class RevealScreen extends StatefulWidget {
   const RevealScreen({this.initialDelay = 0, super.key});
 
   final int initialDelay;
@@ -27,53 +29,121 @@ class RevealScreen extends StatelessWidget {
       'assets/images/coffeePaperCup3Reveal.jpg';
 
   @override
+  State<RevealScreen> createState() => _RevealScreenState();
+}
+
+class _RevealScreenState extends State<RevealScreen> {
+  late final ScrollController _scrollController;
+  final ValueNotifier<double> _aboutProgress = ValueNotifier<double>(0);
+
+  double _heroHeight = 760;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_handleScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
+    _aboutProgress.dispose();
+    super.dispose();
+  }
+
+  void _handleScroll() {
+    final progress = (_scrollController.offset / _heroHeight).clamp(0.0, 1.0);
+
+    if ((progress - _aboutProgress.value).abs() > 0.002) {
+      _aboutProgress.value = progress;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _cream,
+      backgroundColor: RevealScreen._cream,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(94),
-        child: _RevealAppBar(initialDelay: initialDelay),
+        child: _RevealAppBar(initialDelay: widget.initialDelay),
       ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide =
-                constraints.maxWidth >= 760 && constraints.maxHeight >= 620;
+            final isWide = constraints.maxWidth >= 760;
             final horizontalPadding = (constraints.maxWidth * 0.08).clamp(
               24.0,
               86.0,
             );
+            _heroHeight = isWide
+                ? (constraints.maxHeight < 760 ? 760 : constraints.maxHeight)
+                : (constraints.maxHeight < 720 ? 720 : constraints.maxHeight);
+            final aboutHeight = isWide
+                ? (constraints.maxHeight < 760 ? 760.0 : constraints.maxHeight)
+                : (constraints.maxHeight < 1040
+                      ? 1040.0
+                      : constraints.maxHeight);
+            final contentWidth = constraints.maxWidth - horizontalPadding * 2;
 
             if (isWide) {
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: FractionallySizedBox(
-                        widthFactor: 0.52,
-                        alignment: Alignment.centerLeft,
-                        child: _CopyBlock(
-                          maxHeadlineWidth: constraints.maxWidth * 0.42,
-                          initialDelay: initialDelay,
-                        ),
-                      ),
+              return SingleChildScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: SizedBox(
+                    height: _heroHeight + aboutHeight,
+                    child: ValueListenableBuilder<double>(
+                      valueListenable: _aboutProgress,
+                      builder: (context, progress, child) {
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              height: _heroHeight,
+                              child: _RevealHero(
+                                initialDelay: widget.initialDelay,
+                                isWide: true,
+                                maxHeadlineWidth: constraints.maxWidth * 0.42,
+                                showCreamCup: false,
+                              ),
+                            ),
+                            Positioned(
+                              top: _heroHeight,
+                              left: 0,
+                              right: 0,
+                              height: aboutHeight,
+                              child: AboutSection(
+                                progress: progress,
+                                isWide: true,
+                                showStaticCup: false,
+                              ),
+                            ),
+                            ScrollMovingCup(
+                              progress: progress,
+                              stageWidth: contentWidth,
+                              heroHeight: _heroHeight,
+                              aboutHeight: aboutHeight,
+                              imagePath: RevealScreen._creamCup,
+                              revealPath: RevealScreen._creamCupReveal,
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                    Positioned.fill(
-                      child: _CupStage(
-                        isWide: true,
-                        initialDelay: initialDelay,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               );
             }
 
             return SingleChildScrollView(
+              controller: _scrollController,
               physics: const BouncingScrollPhysics(),
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
@@ -85,11 +155,25 @@ class RevealScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _CupStage(isWide: false, initialDelay: initialDelay),
-                    const SizedBox(height: 18),
-                    _CopyBlock(
+                    _RevealHero(
+                      initialDelay: widget.initialDelay,
+                      isWide: false,
                       maxHeadlineWidth: double.infinity,
-                      initialDelay: initialDelay,
+                      showCreamCup: true,
+                    ),
+                    const SizedBox(height: 34),
+                    SizedBox(
+                      height: aboutHeight,
+                      child: ValueListenableBuilder<double>(
+                        valueListenable: _aboutProgress,
+                        builder: (context, progress, child) {
+                          return AboutSection(
+                            progress: progress,
+                            isWide: false,
+                            showStaticCup: true,
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -98,6 +182,65 @@ class RevealScreen extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _RevealHero extends StatelessWidget {
+  const _RevealHero({
+    required this.initialDelay,
+    required this.isWide,
+    required this.maxHeadlineWidth,
+    required this.showCreamCup,
+  });
+
+  final int initialDelay;
+  final bool isWide;
+  final double maxHeadlineWidth;
+  final bool showCreamCup;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isWide) {
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: 0.52,
+              alignment: Alignment.centerLeft,
+              child: _CopyBlock(
+                maxHeadlineWidth: maxHeadlineWidth,
+                initialDelay: initialDelay,
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: _CupStage(
+              isWide: true,
+              initialDelay: initialDelay,
+              showCreamCup: showCreamCup,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _CupStage(
+          isWide: false,
+          initialDelay: initialDelay,
+          showCreamCup: showCreamCup,
+        ),
+        const SizedBox(height: 18),
+        _CopyBlock(
+          maxHeadlineWidth: maxHeadlineWidth,
+          initialDelay: initialDelay,
+        ),
+      ],
     );
   }
 }
@@ -518,10 +661,15 @@ class _Stat extends StatelessWidget {
 }
 
 class _CupStage extends StatefulWidget {
-  const _CupStage({required this.isWide, required this.initialDelay});
+  const _CupStage({
+    required this.isWide,
+    required this.initialDelay,
+    this.showCreamCup = true,
+  });
 
   final bool isWide;
   final int initialDelay;
+  final bool showCreamCup;
 
   @override
   State<_CupStage> createState() => _CupStageState();
@@ -562,19 +710,20 @@ class _CupStageState extends State<_CupStage> {
             bottom: widget.isWide ? 34 : 34,
             child: _SoftCircle(size: widget.isWide ? 360 : 230, opacity: 0.18),
           ),
-          FlyingCup(
-            imagePath: RevealScreen._creamCup,
-            revealImagePath: RevealScreen._creamCupReveal,
-            semanticLabel: 'Cream Koffiqa cup',
-            size: supportingCup,
-            top: widget.isWide ? 10 : 18,
-            right: widget.isWide ? 310 : 148,
-            rotation: 0,
-            delay: widget.initialDelay + 220,
-            revealed: _activeCupIndex == 0,
-            revealScale: 1.08,
-            onRevealToggle: (revealed) => _setActiveCup(0, revealed),
-          ),
+          if (widget.showCreamCup)
+            FlyingCup(
+              imagePath: RevealScreen._creamCup,
+              revealImagePath: RevealScreen._creamCupReveal,
+              semanticLabel: 'Cream Koffiqa cup',
+              size: supportingCup,
+              top: widget.isWide ? 10 : 18,
+              right: widget.isWide ? 310 : 148,
+              rotation: 0,
+              delay: widget.initialDelay + 220,
+              revealed: _activeCupIndex == 0,
+              revealScale: 1.08,
+              onRevealToggle: (revealed) => _setActiveCup(0, revealed),
+            ),
           FlyingCup(
             imagePath: RevealScreen._darkCup,
             revealImagePath: RevealScreen._darkCupReveal,
