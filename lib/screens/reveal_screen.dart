@@ -20,6 +20,11 @@ class RevealScreen extends StatelessWidget {
   static const String _redCup = 'assets/images/coffeePaperCup1.jpg';
   static const String _creamCup = 'assets/images/coffeePaperCup2.jpg';
   static const String _darkCup = 'assets/images/coffeePaperCup3.jpg';
+  static const String _redCupReveal = 'assets/images/coffeePaperCup1Reveal.jpg';
+  static const String _creamCupReveal =
+      'assets/images/coffeePaperCup2Reveal.jpg';
+  static const String _darkCupReveal =
+      'assets/images/coffeePaperCup3Reveal.jpg';
 
   @override
   Widget build(BuildContext context) {
@@ -509,19 +514,34 @@ class _Stat extends StatelessWidget {
   }
 }
 
-class _CupStage extends StatelessWidget {
+class _CupStage extends StatefulWidget {
   const _CupStage({required this.isWide, required this.initialDelay});
 
   final bool isWide;
   final int initialDelay;
 
   @override
+  State<_CupStage> createState() => _CupStageState();
+}
+
+class _CupStageState extends State<_CupStage> {
+  int? _activeCupIndex;
+
+  void _setActiveCup(int index, bool revealed) {
+    setState(() => _activeCupIndex = revealed ? index : null);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final stageHeight = isWide ? 1000.0 : (width * 1.1).clamp(430.0, 610.0);
-    final mainCup = isWide ? 750.0 : (width * 0.74).clamp(270.0, 390.0);
-    final supportingCup = isWide ? 600.0 : (width * 0.55).clamp(205.0, 295.0);
-    final smallCup = isWide ? 600.0 : (width * 0.5).clamp(185.0, 270.0);
+    final stageHeight = widget.isWide
+        ? 1000.0
+        : (width * 1.1).clamp(430.0, 610.0);
+    final mainCup = widget.isWide ? 750.0 : (width * 0.74).clamp(270.0, 390.0);
+    final supportingCup = widget.isWide
+        ? 600.0
+        : (width * 0.55).clamp(205.0, 295.0);
+    final smallCup = widget.isWide ? 600.0 : (width * 0.5).clamp(185.0, 270.0);
 
     return SizedBox(
       height: stageHeight,
@@ -530,38 +550,53 @@ class _CupStage extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Positioned(
-            left: isWide ? -18 : -58,
-            top: isWide ? 106 : 74,
-            child: _SoftCircle(size: isWide ? 560 : 390),
+            left: widget.isWide ? -18 : -58,
+            top: widget.isWide ? 106 : 74,
+            child: _SoftCircle(size: widget.isWide ? 560 : 390),
           ),
           Positioned(
-            right: isWide ? -42 : -54,
-            bottom: isWide ? 34 : 34,
-            child: _SoftCircle(size: isWide ? 360 : 230, opacity: 0.18),
+            right: widget.isWide ? -42 : -54,
+            bottom: widget.isWide ? 34 : 34,
+            child: _SoftCircle(size: widget.isWide ? 360 : 230, opacity: 0.18),
           ),
           FlyingCup(
             imagePath: RevealScreen._creamCup,
+            revealImagePath: RevealScreen._creamCupReveal,
+            semanticLabel: 'Cream Koffiqa cup',
             size: supportingCup,
-            top: isWide ? 10 : 18,
-            right: isWide ? 310 : 148,
+            top: widget.isWide ? 10 : 18,
+            right: widget.isWide ? 310 : 148,
             rotation: 0,
-            delay: initialDelay + 220,
+            delay: widget.initialDelay + 220,
+            revealed: _activeCupIndex == 0,
+            revealScale: 1.08,
+            onRevealToggle: (revealed) => _setActiveCup(0, revealed),
           ),
           FlyingCup(
             imagePath: RevealScreen._darkCup,
+            revealImagePath: RevealScreen._darkCupReveal,
+            semanticLabel: 'Dark Koffiqa cup',
             size: mainCup,
-            top: isWide ? 148 : 116,
-            right: isWide ? -140 : -30,
+            top: widget.isWide ? 148 : 116,
+            right: widget.isWide ? -140 : -30,
             rotation: 0.3,
-            delay: initialDelay + 620,
+            delay: widget.initialDelay + 620,
+            revealed: _activeCupIndex == 1,
+            revealScale: 1.1,
+            onRevealToggle: (revealed) => _setActiveCup(1, revealed),
           ),
           FlyingCup(
             imagePath: RevealScreen._redCup,
+            revealImagePath: RevealScreen._redCupReveal,
+            semanticLabel: 'Red Koffiqa cup',
             size: smallCup,
-            bottom: isWide ? 10 : 34,
-            right: isWide ? 700 : 210,
+            bottom: widget.isWide ? 10 : 34,
+            right: widget.isWide ? 700 : 210,
             rotation: -0.19,
-            delay: initialDelay + 1020,
+            delay: widget.initialDelay + 1020,
+            revealed: _activeCupIndex == 2,
+            revealScale: 1.12,
+            onRevealToggle: (revealed) => _setActiveCup(2, revealed),
           ),
         ],
       ),
