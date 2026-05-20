@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../widgets/bean_rain_animation.dart';
 import '../widgets/split_bean.dart';
 import 'reveal_screen.dart';
 
@@ -14,10 +16,10 @@ class HeroScreen extends StatefulWidget {
 }
 
 class _HeroScreenState extends State<HeroScreen> with TickerProviderStateMixin {
-  late final AnimationController _fallController;
   late final AnimationController _idleController;
   late final AnimationController _splitController;
   Timer? _introTimer;
+  bool _rainCompleted = false;
   bool _splitStarted = false;
   bool _showIntroOverlay = true;
 
@@ -26,10 +28,6 @@ class _HeroScreenState extends State<HeroScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _fallController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2700),
-    )..addStatusListener(_handleFallStatus);
     _idleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1700),
@@ -38,18 +36,26 @@ class _HeroScreenState extends State<HeroScreen> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 2600),
     )..addStatusListener(_handleAnimationStatus);
-
-    _fallController.forward();
   }
 
-  void _handleFallStatus(AnimationStatus status) {
-    if (status == AnimationStatus.completed && mounted) {
-      _introTimer = Timer(const Duration(milliseconds: 1450), _startSplit);
+  void _handleRainCompleted() {
+    if (_rainCompleted || !mounted) {
+      return;
     }
+
+    setState(() {
+      _rainCompleted = true;
+    });
+    _introTimer = Timer(const Duration(milliseconds: 1350), () {
+      if (mounted && !_splitStarted) {
+        _startSplit();
+      }
+    });
   }
 
   void _handleAnimationStatus(AnimationStatus status) {
     if (status == AnimationStatus.completed && _showIntroOverlay && mounted) {
+      _idleController.stop();
       setState(() {
         _showIntroOverlay = false;
       });
@@ -62,10 +68,9 @@ class _HeroScreenState extends State<HeroScreen> with TickerProviderStateMixin {
     }
 
     _introTimer?.cancel();
-    if (_fallController.value < 1) {
-      _fallController.value = 1;
-    }
+    _idleController.stop();
     setState(() {
+      _rainCompleted = true;
       _splitStarted = true;
     });
     _splitController.forward();
@@ -74,9 +79,6 @@ class _HeroScreenState extends State<HeroScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _introTimer?.cancel();
-    _fallController
-      ..removeStatusListener(_handleFallStatus)
-      ..dispose();
     _idleController.dispose();
     _splitController
       ..removeStatusListener(_handleAnimationStatus)
@@ -104,9 +106,10 @@ class _HeroScreenState extends State<HeroScreen> with TickerProviderStateMixin {
               onTap: _startSplit,
               child: _SplitIntroOverlay(
                 splitController: _splitController,
-                fallController: _fallController,
                 idleController: _idleController,
                 beanWidth: beanWidth,
+                rainCompleted: _rainCompleted,
+                onRainCompleted: _handleRainCompleted,
               ),
             ),
         ],
@@ -118,15 +121,17 @@ class _HeroScreenState extends State<HeroScreen> with TickerProviderStateMixin {
 class _SplitIntroOverlay extends StatelessWidget {
   const _SplitIntroOverlay({
     required this.splitController,
-    required this.fallController,
     required this.idleController,
     required this.beanWidth,
+    required this.rainCompleted,
+    required this.onRainCompleted,
   });
 
   final AnimationController splitController;
-  final AnimationController fallController;
   final AnimationController idleController;
   final double beanWidth;
+  final bool rainCompleted;
+  final VoidCallback onRainCompleted;
 
   @override
   Widget build(BuildContext context) {
@@ -136,9 +141,10 @@ class _SplitIntroOverlay extends StatelessWidget {
         final height = constraints.maxHeight;
         final scene = _IntroScene(
           splitController: splitController,
-          fallController: fallController,
           idleController: idleController,
           beanWidth: beanWidth,
+          rainCompleted: rainCompleted,
+          onRainCompleted: onRainCompleted,
         );
 
         return AnimatedBuilder(
@@ -233,20 +239,26 @@ class _IntroHalf extends StatelessWidget {
 class _IntroScene extends StatelessWidget {
   const _IntroScene({
     required this.splitController,
-    required this.fallController,
     required this.idleController,
     required this.beanWidth,
+    required this.rainCompleted,
+    required this.onRainCompleted,
   });
 
   final AnimationController splitController;
-  final AnimationController fallController;
   final AnimationController idleController;
   final double beanWidth;
+  final bool rainCompleted;
+  final VoidCallback onRainCompleted;
 
   static const Color _espresso = Color(0xFF180800);
   static const Color _deepBrown = Color(0xFF2A1005);
+  static const Color _cream = Color(0xFFF5E6CC);
+
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+
     return SizedBox.expand(
       child: DecoratedBox(
         decoration: const BoxDecoration(
@@ -263,12 +275,36 @@ class _IntroScene extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 CustomPaint(painter: _SteamLinePainter()),
+                Positioned(
+                  top: size.height * 0.11,
+                  left: 24,
+                  right: 24,
+                  child: Text(
+                    'KOFFIQA',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      color: _cream,
+                      fontSize: (size.width * 0.13).clamp(44.0, 76.0),
+                      fontWeight: FontWeight.w800,
+                      height: 1,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                ),
+                IgnorePointer(
+                  child: BeanRainAnimation(
+                    beanCount: 44,
+                    groundYFactor: 0.58,
+                    duration: const Duration(milliseconds: 3200),
+                    onCompleted: onRainCompleted,
+                  ),
+                ),
                 Center(
                   child: _BeanIntroStage(
                     splitController: splitController,
-                    fallController: fallController,
                     idleController: idleController,
                     beanWidth: beanWidth,
+                    rainCompleted: rainCompleted,
                   ),
                 ),
               ],
@@ -283,15 +319,15 @@ class _IntroScene extends StatelessWidget {
 class _BeanIntroStage extends StatelessWidget {
   const _BeanIntroStage({
     required this.splitController,
-    required this.fallController,
     required this.idleController,
     required this.beanWidth,
+    required this.rainCompleted,
   });
 
   final AnimationController splitController;
-  final AnimationController fallController;
   final AnimationController idleController;
   final double beanWidth;
+  final bool rainCompleted;
 
   @override
   Widget build(BuildContext context) {
@@ -301,128 +337,74 @@ class _BeanIntroStage extends StatelessWidget {
     return SizedBox(
       width: stageSize,
       height: stageSize * 1.18,
-      child: AnimatedBuilder(
-        animation: Listenable.merge([
-          fallController,
-          idleController,
-          splitController,
-        ]),
-        builder: (context, child) {
-          final fallValue = fallController.value;
-          final fallCurve = Curves.easeOutBack.transform(fallValue);
-          final bigReveal = Curves.easeOutBack.transform(
-            ((fallValue - 0.68) / 0.32).clamp(0.0, 1.0),
-          );
-          final splitValue = splitController.value;
-          final idle = math.sin(idleController.value * math.pi * 2);
-          final bigScale = bigReveal * (1 + idle * 0.018);
-          final bigLift = idle * 5 * bigReveal * (1 - splitValue);
-          final smallOpacity = (1 - ((fallValue - 0.72) / 0.22).clamp(0, 1))
-              .toDouble();
-          final beanOpacity = (1 - splitValue * 0.08).clamp(0.0, 1.0);
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(end: rainCompleted ? 1 : 0),
+        duration: const Duration(milliseconds: 850),
+        curve: Curves.easeOutBack,
+        builder: (context, revealProgress, child) {
+          return AnimatedBuilder(
+            animation: Listenable.merge([idleController, splitController]),
+            builder: (context, child) {
+              final bigReveal = revealProgress.clamp(0.0, 1.0);
+              final splitValue = splitController.value;
+              final idle = math.sin(idleController.value * math.pi * 2);
+              final bigScale = bigReveal * (1 + idle * 0.018);
+              final bigLift = idle * 5 * bigReveal * (1 - splitValue);
+              final beanOpacity = (bigReveal * (1 - splitValue * 0.08)).clamp(
+                0.0,
+                1.0,
+              );
 
-          return Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              for (var i = 0; i < 14; i++)
-                _FallingMiniBean(
-                  index: i,
-                  progress: fallCurve,
-                  opacity: smallOpacity,
-                  stageSize: stageSize,
-                ),
-              Transform.translate(
-                offset: Offset(0, bigLift),
-                child: Transform.scale(
-                  scale: bigScale,
-                  child: Opacity(
-                    opacity: beanOpacity,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: beanWidth * 1.34,
-                          height: beanWidth * 1.58,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(
-                                  0xFFC9922A,
-                                ).withValues(alpha: 0.18 * bigReveal),
-                                blurRadius: 60,
-                                spreadRadius: 14,
+              return Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  Transform.translate(
+                    offset: Offset(0, bigLift),
+                    child: Transform.scale(
+                      scale: bigScale,
+                      child: Opacity(
+                        opacity: beanOpacity,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: beanWidth * 1.34,
+                              height: beanWidth * 1.58,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFFC9922A,
+                                    ).withValues(alpha: 0.18 * bigReveal),
+                                    blurRadius: 60,
+                                    spreadRadius: 14,
+                                  ),
+                                  BoxShadow(
+                                    color: Colors.black.withValues(
+                                      alpha: 0.58 * bigReveal,
+                                    ),
+                                    blurRadius: 46,
+                                    offset: const Offset(0, 30),
+                                  ),
+                                ],
                               ),
-                              BoxShadow(
-                                color: Colors.black.withValues(
-                                  alpha: 0.58 * bigReveal,
-                                ),
-                                blurRadius: 46,
-                                offset: const Offset(0, 30),
-                              ),
-                            ],
-                          ),
+                            ),
+                            SplitBean(
+                              controller: splitController,
+                              size: beanWidth,
+                            ),
+                          ],
                         ),
-                        SplitBean(controller: splitController, size: beanWidth),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           );
         },
-      ),
-    );
-  }
-}
-
-class _FallingMiniBean extends StatelessWidget {
-  const _FallingMiniBean({
-    required this.index,
-    required this.progress,
-    required this.opacity,
-    required this.stageSize,
-  });
-
-  final int index;
-  final double progress;
-  final double opacity;
-  final double stageSize;
-
-  static const String _beanPath = 'assets/images/bean.png';
-
-  @override
-  Widget build(BuildContext context) {
-    final seed = index + 1;
-    final row = index ~/ 7;
-    final column = index % 7;
-    final targetX =
-        (column - 3) * stageSize * 0.052 + (row == 0 ? 0 : stageSize * 0.026);
-    final startX = (seed % 7 - 3) * stageSize * 0.18;
-    final startY = -stageSize * (0.78 + (seed % 4) * 0.16);
-    final targetY = stageSize * (0.04 + row * 0.052);
-    final wobble = math.sin(progress * math.pi * (1.5 + seed * 0.08)) * 14;
-    final x = startX + (targetX - startX) * progress + wobble * (1 - progress);
-    final y = startY + (targetY - startY) * progress;
-    final bounce = math.sin(progress * math.pi * 4) * 10 * (1 - progress);
-    final size = stageSize * (0.04 + (index % 3) * 0.006);
-
-    return Transform.translate(
-      offset: Offset(x, y + bounce),
-      child: Transform.rotate(
-        angle: -0.55 + progress * (0.7 + seed * 0.03),
-        child: Opacity(
-          opacity: opacity,
-          child: Image.asset(
-            _beanPath,
-            width: size,
-            height: size * 1.32,
-            fit: BoxFit.contain,
-            filterQuality: FilterQuality.high,
-          ),
-        ),
       ),
     );
   }
