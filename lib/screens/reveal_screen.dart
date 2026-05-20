@@ -99,9 +99,18 @@ class _RevealAppBar extends StatelessWidget {
 
   final int initialDelay;
 
+  static const List<String> _navItems = [
+    'Home',
+    'About Us',
+    'Our Products',
+    'Contact Us',
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 680;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWide = screenWidth >= 760;
+    final barMaxWidth = (screenWidth - 28).clamp(320.0, 760.0);
 
     return SafeArea(
       bottom: false,
@@ -109,59 +118,97 @@ class _RevealAppBar extends StatelessWidget {
         height: 94,
         child: Center(
           child:
-              ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.34),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: RevealScreen._deepBrown.withValues(
-                                alpha: 0.12,
-                              ),
-                              blurRadius: 28,
-                              offset: const Offset(0, 14),
-                            ),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isWide ? 24 : 18,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'KOFFIQA',
-                                style: GoogleFonts.poppins(
-                                  color: RevealScreen._espresso,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.8,
-                                ),
-                              ),
-                              if (isWide) ...[
-                                const SizedBox(width: 26),
-                                const _GlassNavText('Menu'),
-                                const _GlassDivider(),
-                                const _GlassNavText('Roastery'),
-                                const _GlassDivider(),
-                                const _GlassNavText('Ajdan Walk'),
-                              ] else ...[
-                                const SizedBox(width: 18),
-                                Icon(
-                                  Icons.menu_rounded,
-                                  color: RevealScreen._deepBrown,
-                                  size: 20,
-                                ),
+              ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: barMaxWidth),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.58),
+                                Colors.white.withValues(alpha: 0.22),
                               ],
+                            ),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.62),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: RevealScreen._deepBrown.withValues(
+                                  alpha: 0.14,
+                                ),
+                                blurRadius: 32,
+                                offset: const Offset(0, 18),
+                              ),
+                              BoxShadow(
+                                color: RevealScreen._gold.withValues(
+                                  alpha: 0.12,
+                                ),
+                                blurRadius: 34,
+                                spreadRadius: -8,
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                left: 18,
+                                right: 18,
+                                bottom: 0,
+                                child: Container(
+                                  height: 1,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.transparent,
+                                        RevealScreen._gold.withValues(
+                                          alpha: 0.55,
+                                        ),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isWide ? 10 : 8,
+                                  vertical: 8,
+                                ),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const _BrandMark(),
+                                      SizedBox(width: isWide ? 12 : 8),
+                                      ..._navItems.indexed.map((entry) {
+                                        final index = entry.$1;
+                                        final item = entry.$2;
+
+                                        return Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (index > 0)
+                                              const _GlassDivider(),
+                                            _GlassNavText(
+                                              item,
+                                              isActive: index == 0,
+                                            ),
+                                          ],
+                                        );
+                                      }),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -183,19 +230,89 @@ class _RevealAppBar extends StatelessWidget {
   }
 }
 
-class _GlassNavText extends StatelessWidget {
-  const _GlassNavText(this.label);
-
-  final String label;
+class _BrandMark extends StatelessWidget {
+  const _BrandMark();
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: GoogleFonts.poppins(
-        color: RevealScreen._mutedBrown,
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: RevealScreen._espresso.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: RevealScreen._espresso.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: RevealScreen._gold,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 9),
+            Text(
+              'KOFFIQA',
+              style: GoogleFonts.poppins(
+                color: RevealScreen._cream,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.6,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassNavText extends StatelessWidget {
+  const _GlassNavText(this.label, {this.isActive = false});
+
+  final String label;
+  final bool isActive;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: isActive
+            ? RevealScreen._gold.withValues(alpha: 0.94)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: RevealScreen._gold.withValues(alpha: 0.24),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        style: GoogleFonts.poppins(
+          color: isActive ? RevealScreen._espresso : RevealScreen._mutedBrown,
+          fontSize: 12.5,
+          fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
+          letterSpacing: 0.1,
+        ),
       ),
     );
   }
@@ -208,9 +325,9 @@ class _GlassDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 1,
-      height: 18,
-      margin: const EdgeInsets.symmetric(horizontal: 15),
-      color: RevealScreen._mutedBrown.withValues(alpha: 0.18),
+      height: 16,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      color: RevealScreen._mutedBrown.withValues(alpha: 0.14),
     );
   }
 }
