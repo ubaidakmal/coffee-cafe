@@ -48,11 +48,11 @@ class _ScrollMovingCupState extends State<ScrollMovingCup> {
     final productProgress = Curves.easeInOutCubic.transform(
       (widget.progress - 1).clamp(0.0, 1.0),
     );
-    final baseSize = widget.stageWidth < 980 ? 520.0 : 600.0;
+    final baseSize = widget.stageWidth < 980 ? 520.0 : 550.0;
     final cardWidth = (widget.stageWidth - 48) / 3;
     final productSize = (cardWidth * 0.72).clamp(230.0, 315.0);
     final size = lerpDouble(baseSize, productSize, productProgress)!;
-    final heroLeft = widget.stageWidth - 310 - baseSize;
+    final heroLeft = widget.stageWidth - 100 - baseSize;
     final aboutLeft = (widget.stageWidth * 0.12 - baseSize * 0.22).clamp(
       -58.0,
       120.0,

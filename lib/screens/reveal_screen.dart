@@ -856,11 +856,11 @@ class _CupStageState extends State<_CupStage> {
     final stageHeight = widget.isWide
         ? 1000.0
         : (width * 1.1).clamp(430.0, 610.0);
-    final mainCup = widget.isWide ? 750.0 : (width * 0.74).clamp(270.0, 390.0);
+    final mainCup = widget.isWide ? 600.0 : (width * 0.74).clamp(270.0, 390.0);
     final supportingCup = widget.isWide
-        ? 600.0
+        ? 500.0
         : (width * 0.55).clamp(205.0, 295.0);
-    final smallCup = widget.isWide ? 600.0 : (width * 0.5).clamp(185.0, 270.0);
+    final smallCup = widget.isWide ? 500.0 : (width * 0.5).clamp(185.0, 270.0);
 
     return SizedBox(
       height: stageHeight,
@@ -898,7 +898,7 @@ class _CupStageState extends State<_CupStage> {
             semanticLabel: 'Dark Koffiqa cup',
             size: mainCup,
             top: widget.isWide ? 148 : 116,
-            right: widget.isWide ? -140 : -30,
+            right: widget.isWide ? -200 : -30,
             rotation: 0.3,
             delay: widget.initialDelay + 620,
             revealed: _activeCupIndex == 1,
@@ -911,7 +911,7 @@ class _CupStageState extends State<_CupStage> {
             semanticLabel: 'Red Koffiqa cup',
             size: smallCup,
             bottom: widget.isWide ? 10 : 34,
-            right: widget.isWide ? 700 : 210,
+            right: widget.isWide ? 400 : 210,
             rotation: -0.19,
             delay: widget.initialDelay + 1020,
             revealed: _activeCupIndex == 2,
