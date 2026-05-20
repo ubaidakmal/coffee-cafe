@@ -11,5 +11,8 @@ void main() {
     expect(find.text('CAF\u00C9 & ROASTERY'), findsNothing);
 
     expect(find.byType(Image), findsWidgets);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 }

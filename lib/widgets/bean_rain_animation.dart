@@ -9,6 +9,7 @@ class BeanRainAnimation extends StatefulWidget {
     this.groundYFactor = 0.68,
     this.duration = const Duration(milliseconds: 3200),
     this.autoStart = true,
+    this.settled = false,
     this.onCompleted,
     super.key,
   });
@@ -17,6 +18,7 @@ class BeanRainAnimation extends StatefulWidget {
   final double groundYFactor;
   final Duration duration;
   final bool autoStart;
+  final bool settled;
   final VoidCallback? onCompleted;
 
   @override
@@ -38,7 +40,10 @@ class _BeanRainAnimationState extends State<BeanRainAnimation>
     _controller = AnimationController(vsync: this, duration: widget.duration)
       ..addStatusListener(_handleStatus);
 
-    if (widget.autoStart) {
+    if (widget.settled) {
+      _didComplete = true;
+      _controller.value = 1;
+    } else if (widget.autoStart) {
       _controller.forward();
     }
   }
@@ -48,6 +53,11 @@ class _BeanRainAnimationState extends State<BeanRainAnimation>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.duration != widget.duration) {
       _controller.duration = widget.duration;
+    }
+    if (!oldWidget.settled && widget.settled) {
+      _didComplete = true;
+      _controller.value = 1;
+      _controller.stop();
     }
   }
 
