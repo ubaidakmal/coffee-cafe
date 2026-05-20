@@ -5,7 +5,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../widgets/about_section.dart';
+import '../widgets/contact_section.dart';
 import '../widgets/flying_cup.dart';
+import '../widgets/footer_section.dart';
 import '../widgets/products_section.dart';
 import '../widgets/scroll_moving_cup.dart';
 
@@ -36,9 +38,11 @@ class RevealScreen extends StatefulWidget {
 class _RevealScreenState extends State<RevealScreen> {
   late final ScrollController _scrollController;
   final ValueNotifier<double> _scrollProgress = ValueNotifier<double>(0);
+  final ValueNotifier<int> _activeSection = ValueNotifier<int>(0);
 
   double _heroHeight = 760;
   double _aboutHeight = 760;
+  double _productsHeight = 1040;
 
   @override
   void initState() {
@@ -52,20 +56,50 @@ class _RevealScreenState extends State<RevealScreen> {
       ..removeListener(_handleScroll)
       ..dispose();
     _scrollProgress.dispose();
+    _activeSection.dispose();
     super.dispose();
   }
 
   void _handleScroll() {
-    final progress = _scrollController.offset <= _heroHeight
-        ? (_scrollController.offset / _heroHeight).clamp(0.0, 1.0)
-        : (1 + (_scrollController.offset - _heroHeight) / _aboutHeight).clamp(
-            1.0,
+    final offset = _scrollController.offset;
+    final progress = offset <= _heroHeight
+        ? (offset / _heroHeight).clamp(0.0, 1.0)
+        : offset <= _heroHeight + _aboutHeight
+        ? (1 + (offset - _heroHeight) / _aboutHeight).clamp(1.0, 2.0)
+        : (2 + (offset - _heroHeight - _aboutHeight) / _productsHeight).clamp(
             2.0,
+            3.0,
           );
 
     if ((progress - _scrollProgress.value).abs() > 0.002) {
       _scrollProgress.value = progress;
     }
+
+    final section = progress < 0.74
+        ? 0
+        : progress < 1.74
+        ? 1
+        : progress < 2.72
+        ? 2
+        : 3;
+    if (section != _activeSection.value) {
+      _activeSection.value = section;
+    }
+  }
+
+  void _scrollToSection(int index) {
+    final target = switch (index) {
+      0 => 0.0,
+      1 => _heroHeight,
+      2 => _heroHeight + _aboutHeight,
+      _ => _heroHeight + _aboutHeight + _productsHeight,
+    };
+
+    _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 980),
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   @override
@@ -74,7 +108,11 @@ class _RevealScreenState extends State<RevealScreen> {
       backgroundColor: RevealScreen._cream,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(94),
-        child: _RevealAppBar(initialDelay: widget.initialDelay),
+        child: _RevealAppBar(
+          initialDelay: widget.initialDelay,
+          activeSection: _activeSection,
+          onNavigate: _scrollToSection,
+        ),
       ),
       body: SafeArea(
         top: false,
@@ -99,6 +137,11 @@ class _RevealScreenState extends State<RevealScreen> {
                       ? 1040.0
                       : constraints.maxHeight)
                 : 1420.0;
+            _productsHeight = productsHeight;
+            final contactHeight = isWide
+                ? (constraints.maxHeight < 860 ? 860.0 : constraints.maxHeight)
+                : 980.0;
+            final footerHeight = isWide ? 300.0 : 440.0;
             final contentWidth = constraints.maxWidth - horizontalPadding * 2;
 
             if (isWide) {
@@ -108,12 +151,18 @@ class _RevealScreenState extends State<RevealScreen> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: SizedBox(
-                    height: _heroHeight + aboutHeight + productsHeight,
+                    height:
+                        _heroHeight +
+                        aboutHeight +
+                        productsHeight +
+                        contactHeight +
+                        footerHeight,
                     child: ValueListenableBuilder<double>(
                       valueListenable: _scrollProgress,
                       builder: (context, progress, child) {
                         final aboutProgress = progress.clamp(0.0, 1.0);
                         final productsProgress = (progress - 1).clamp(0.0, 1.0);
+                        final contactProgress = (progress - 2).clamp(0.0, 1.0);
                         final creamImageOpacity = productsProgress < 0.72
                             ? 0.0
                             : ((productsProgress - 0.72) / 0.28).clamp(
@@ -157,6 +206,27 @@ class _RevealScreenState extends State<RevealScreen> {
                                 isWide: true,
                                 creamImageOpacity: creamImageOpacity,
                               ),
+                            ),
+                            Positioned(
+                              top: _heroHeight + aboutHeight + productsHeight,
+                              left: 0,
+                              right: 0,
+                              height: contactHeight,
+                              child: ContactSection(
+                                progress: contactProgress,
+                                isWide: true,
+                              ),
+                            ),
+                            Positioned(
+                              top:
+                                  _heroHeight +
+                                  aboutHeight +
+                                  productsHeight +
+                                  contactHeight,
+                              left: 0,
+                              right: 0,
+                              height: footerHeight,
+                              child: const FooterSection(),
                             ),
                             ScrollMovingCup(
                               progress: progress,
@@ -221,6 +291,22 @@ class _RevealScreenState extends State<RevealScreen> {
                           );
                         },
                       ),
+                    ),
+                    SizedBox(
+                      height: contactHeight,
+                      child: ValueListenableBuilder<double>(
+                        valueListenable: _scrollProgress,
+                        builder: (context, progress, child) {
+                          return ContactSection(
+                            progress: (progress - 2).clamp(0.0, 1.0),
+                            isWide: false,
+                          );
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      height: footerHeight,
+                      child: const FooterSection(),
                     ),
                   ],
                 ),
@@ -293,9 +379,15 @@ class _RevealHero extends StatelessWidget {
 }
 
 class _RevealAppBar extends StatelessWidget {
-  const _RevealAppBar({required this.initialDelay});
+  const _RevealAppBar({
+    required this.initialDelay,
+    required this.activeSection,
+    required this.onNavigate,
+  });
 
   final int initialDelay;
+  final ValueNotifier<int> activeSection;
+  final ValueChanged<int> onNavigate;
 
   static const List<String> _navItems = [
     'Home',
@@ -316,102 +408,112 @@ class _RevealAppBar extends StatelessWidget {
         height: 94,
         child: Center(
           child:
-              ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: barMaxWidth),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.58),
-                                Colors.white.withValues(alpha: 0.22),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.62),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: RevealScreen._deepBrown.withValues(
-                                  alpha: 0.14,
+              ValueListenableBuilder<int>(
+                    valueListenable: activeSection,
+                    builder: (context, activeIndex, child) {
+                      return ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: barMaxWidth),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(28),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.58),
+                                    Colors.white.withValues(alpha: 0.22),
+                                  ],
                                 ),
-                                blurRadius: 32,
-                                offset: const Offset(0, 18),
-                              ),
-                              BoxShadow(
-                                color: RevealScreen._gold.withValues(
-                                  alpha: 0.12,
+                                borderRadius: BorderRadius.circular(28),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.62),
                                 ),
-                                blurRadius: 34,
-                                spreadRadius: -8,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: RevealScreen._deepBrown.withValues(
+                                      alpha: 0.14,
+                                    ),
+                                    blurRadius: 32,
+                                    offset: const Offset(0, 18),
+                                  ),
+                                  BoxShadow(
+                                    color: RevealScreen._gold.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    blurRadius: 34,
+                                    spreadRadius: -8,
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Stack(
-                            children: [
-                              Positioned(
-                                left: 18,
-                                right: 18,
-                                bottom: 0,
-                                child: Container(
-                                  height: 1,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.transparent,
-                                        RevealScreen._gold.withValues(
-                                          alpha: 0.55,
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    left: 18,
+                                    right: 18,
+                                    bottom: 0,
+                                    child: Container(
+                                      height: 1,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.transparent,
+                                            RevealScreen._gold.withValues(
+                                              alpha: 0.55,
+                                            ),
+                                            Colors.transparent,
+                                          ],
                                         ),
-                                        Colors.transparent,
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isWide ? 10 : 8,
-                                  vertical: 8,
-                                ),
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  physics: const BouncingScrollPhysics(),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const _BrandMark(),
-                                      SizedBox(width: isWide ? 12 : 8),
-                                      ..._navItems.indexed.map((entry) {
-                                        final index = entry.$1;
-                                        final item = entry.$2;
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isWide ? 10 : 8,
+                                      vertical: 8,
+                                    ),
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      physics: const BouncingScrollPhysics(),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          _BrandMark(
+                                            onTap: () => onNavigate(0),
+                                          ),
+                                          SizedBox(width: isWide ? 12 : 8),
+                                          ..._navItems.indexed.map((entry) {
+                                            final index = entry.$1;
+                                            final item = entry.$2;
 
-                                        return Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            if (index > 0)
-                                              const _GlassDivider(),
-                                            _GlassNavText(
-                                              item,
-                                              isActive: index == 0,
-                                            ),
-                                          ],
-                                        );
-                                      }),
-                                    ],
+                                            return Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                if (index > 0)
+                                                  const _GlassDivider(),
+                                                _GlassNavText(
+                                                  item,
+                                                  isActive:
+                                                      index == activeIndex,
+                                                  onTap: () =>
+                                                      onNavigate(index),
+                                                ),
+                                              ],
+                                            );
+                                          }),
+                                        ],
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   )
                   .animate(delay: (initialDelay + 220).ms)
                   .fadeIn(duration: 520.ms)
@@ -429,46 +531,55 @@ class _RevealAppBar extends StatelessWidget {
 }
 
 class _BrandMark extends StatelessWidget {
-  const _BrandMark();
+  const _BrandMark({required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: RevealScreen._espresso.withValues(alpha: 0.92),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: RevealScreen._espresso.withValues(alpha: 0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+        onTap: onTap,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: RevealScreen._espresso.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: RevealScreen._espresso.withValues(alpha: 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: RevealScreen._gold,
-                shape: BoxShape.circle,
-              ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: RevealScreen._gold,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Text(
+                  'KOFFIQA',
+                  style: GoogleFonts.poppins(
+                    color: RevealScreen._cream,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.6,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 9),
-            Text(
-              'KOFFIQA',
-              style: GoogleFonts.poppins(
-                color: RevealScreen._cream,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.6,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -476,40 +587,50 @@ class _BrandMark extends StatelessWidget {
 }
 
 class _GlassNavText extends StatelessWidget {
-  const _GlassNavText(this.label, {this.isActive = false});
+  const _GlassNavText(this.label, {required this.onTap, this.isActive = false});
 
   final String label;
+  final VoidCallback onTap;
   final bool isActive;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 240),
-      curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-      decoration: BoxDecoration(
-        color: isActive
-            ? RevealScreen._gold.withValues(alpha: 0.94)
-            : Colors.transparent,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: RevealScreen._gold.withValues(alpha: 0.24),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : null,
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        style: GoogleFonts.poppins(
-          color: isActive ? RevealScreen._espresso : RevealScreen._mutedBrown,
-          fontSize: 12.5,
-          fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
-          letterSpacing: 0.1,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            color: isActive
+                ? RevealScreen._gold.withValues(alpha: 0.94)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: RevealScreen._gold.withValues(alpha: 0.24),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            style: GoogleFonts.poppins(
+              color: isActive
+                  ? RevealScreen._espresso
+                  : RevealScreen._mutedBrown,
+              fontSize: 12.5,
+              fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
+              letterSpacing: 0.1,
+            ),
+          ),
         ),
       ),
     );

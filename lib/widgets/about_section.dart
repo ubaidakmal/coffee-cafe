@@ -32,7 +32,11 @@ class AboutSection extends StatelessWidget {
 
     return DecoratedBox(
       decoration: const BoxDecoration(
-
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [_cream, _softCream],
+        ),
       ),
       child: Stack(
         clipBehavior: Clip.none,
