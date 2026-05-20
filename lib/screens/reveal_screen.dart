@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../widgets/about_section.dart';
 import '../widgets/flying_cup.dart';
+import '../widgets/products_section.dart';
 import '../widgets/scroll_moving_cup.dart';
 
 class RevealScreen extends StatefulWidget {
@@ -34,9 +35,10 @@ class RevealScreen extends StatefulWidget {
 
 class _RevealScreenState extends State<RevealScreen> {
   late final ScrollController _scrollController;
-  final ValueNotifier<double> _aboutProgress = ValueNotifier<double>(0);
+  final ValueNotifier<double> _scrollProgress = ValueNotifier<double>(0);
 
   double _heroHeight = 760;
+  double _aboutHeight = 760;
 
   @override
   void initState() {
@@ -49,15 +51,20 @@ class _RevealScreenState extends State<RevealScreen> {
     _scrollController
       ..removeListener(_handleScroll)
       ..dispose();
-    _aboutProgress.dispose();
+    _scrollProgress.dispose();
     super.dispose();
   }
 
   void _handleScroll() {
-    final progress = (_scrollController.offset / _heroHeight).clamp(0.0, 1.0);
+    final progress = _scrollController.offset <= _heroHeight
+        ? (_scrollController.offset / _heroHeight).clamp(0.0, 1.0)
+        : (1 + (_scrollController.offset - _heroHeight) / _aboutHeight).clamp(
+            1.0,
+            2.0,
+          );
 
-    if ((progress - _aboutProgress.value).abs() > 0.002) {
-      _aboutProgress.value = progress;
+    if ((progress - _scrollProgress.value).abs() > 0.002) {
+      _scrollProgress.value = progress;
     }
   }
 
@@ -86,6 +93,12 @@ class _RevealScreenState extends State<RevealScreen> {
                 : (constraints.maxHeight < 1040
                       ? 1040.0
                       : constraints.maxHeight);
+            _aboutHeight = aboutHeight;
+            final productsHeight = isWide
+                ? (constraints.maxHeight < 1040
+                      ? 1040.0
+                      : constraints.maxHeight)
+                : 1420.0;
             final contentWidth = constraints.maxWidth - horizontalPadding * 2;
 
             if (isWide) {
@@ -95,10 +108,19 @@ class _RevealScreenState extends State<RevealScreen> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: SizedBox(
-                    height: _heroHeight + aboutHeight,
+                    height: _heroHeight + aboutHeight + productsHeight,
                     child: ValueListenableBuilder<double>(
-                      valueListenable: _aboutProgress,
+                      valueListenable: _scrollProgress,
                       builder: (context, progress, child) {
+                        final aboutProgress = progress.clamp(0.0, 1.0);
+                        final productsProgress = (progress - 1).clamp(0.0, 1.0);
+                        final creamImageOpacity = productsProgress < 0.72
+                            ? 0.0
+                            : ((productsProgress - 0.72) / 0.28).clamp(
+                                0.0,
+                                1.0,
+                              );
+
                         return Stack(
                           clipBehavior: Clip.none,
                           children: [
@@ -120,9 +142,20 @@ class _RevealScreenState extends State<RevealScreen> {
                               right: 0,
                               height: aboutHeight,
                               child: AboutSection(
-                                progress: progress,
+                                progress: aboutProgress,
                                 isWide: true,
                                 showStaticCup: false,
+                              ),
+                            ),
+                            Positioned(
+                              top: _heroHeight + aboutHeight,
+                              left: 0,
+                              right: 0,
+                              height: productsHeight,
+                              child: ProductsSection(
+                                progress: productsProgress,
+                                isWide: true,
+                                creamImageOpacity: creamImageOpacity,
                               ),
                             ),
                             ScrollMovingCup(
@@ -130,6 +163,7 @@ class _RevealScreenState extends State<RevealScreen> {
                               stageWidth: contentWidth,
                               heroHeight: _heroHeight,
                               aboutHeight: aboutHeight,
+                              productsHeight: productsHeight,
                               imagePath: RevealScreen._creamCup,
                               revealPath: RevealScreen._creamCupReveal,
                             ),
@@ -165,12 +199,25 @@ class _RevealScreenState extends State<RevealScreen> {
                     SizedBox(
                       height: aboutHeight,
                       child: ValueListenableBuilder<double>(
-                        valueListenable: _aboutProgress,
+                        valueListenable: _scrollProgress,
                         builder: (context, progress, child) {
                           return AboutSection(
-                            progress: progress,
+                            progress: progress.clamp(0.0, 1.0),
                             isWide: false,
                             showStaticCup: true,
+                          );
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      height: productsHeight,
+                      child: ValueListenableBuilder<double>(
+                        valueListenable: _scrollProgress,
+                        builder: (context, progress, child) {
+                          return ProductsSection(
+                            progress: (progress - 1).clamp(0.0, 1.0),
+                            isWide: false,
+                            creamImageOpacity: 1,
                           );
                         },
                       ),
