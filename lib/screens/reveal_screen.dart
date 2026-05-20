@@ -48,18 +48,21 @@ class RevealScreen extends StatelessWidget {
             if (isWide) {
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: Row(
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    Expanded(
-                      flex: 9,
-                      child: _CopyBlock(
-                        maxHeadlineWidth: constraints.maxWidth * 0.42,
-                        initialDelay: initialDelay,
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FractionallySizedBox(
+                        widthFactor: 0.52,
+                        alignment: Alignment.centerLeft,
+                        child: _CopyBlock(
+                          maxHeadlineWidth: constraints.maxWidth * 0.42,
+                          initialDelay: initialDelay,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 28),
-                    Expanded(
-                      flex: 8,
+                    Positioned.fill(
                       child: _CupStage(
                         isWide: true,
                         initialDelay: initialDelay,
